@@ -1,0 +1,286 @@
+using System;
+using System.IO;
+using System.Linq;
+using System.Collections.Generic;
+using System.Text;
+
+class CombinedProgram
+{
+    static void Main()
+    {
+        while (true)
+        {
+            Console.Clear();
+            Console.WriteLine("Select an action:");
+            Console.WriteLine("1 - Process Two-Dimensional Array");
+            Console.WriteLine("2 - Process Numeric File");
+            Console.WriteLine("3 - Process Weekly Temperature Data");
+            Console.WriteLine("4 - Manage Friends List");
+            Console.WriteLine("5 - Query Friends Data");
+            Console.WriteLine("q - Exit");
+            string choice = Console.ReadLine();
+            Console.Clear();
+
+            switch (choice)
+            {
+                case "1":
+                    ProcessTwoDimensionalArray();
+                    break;
+                case "2":
+                    ProcessNumericFile();
+                    break;
+                case "3":
+                    ProcessWeeklyTemperatureData();
+                    break;
+                case "4":
+                    ManageFriendsList();
+                    break;
+                case "5":
+                    QueryFriendsData();
+                    break;
+                case "q":
+                    return;
+                default:
+                    Console.WriteLine("ERROR. Press Enter to try again");
+                    Console.ReadLine();
+                    break;
+            }
+        }
+    }
+
+    // Task 1: Process Two-Dimensional Array from a Text File
+    static void ProcessTwoDimensionalArray()
+    {
+        string fileName = "array.txt";
+        int[,] array = LoadArrayFromFile(fileName);
+        ShowArray(array);
+        ShowRowAndColumnTotals(array);
+    }
+
+    static int[,] LoadArrayFromFile(string fileName)
+    {
+        using StreamReader sr = new StreamReader(fileName);
+        string[] dimensions = sr.ReadLine().Split();
+        int rows = int.Parse(dimensions[0]);
+        int cols = int.Parse(dimensions[1]);
+        int[,] array = new int[rows, cols];
+
+        for (int i = 0; i < rows; i++)
+        {
+            string[] line = sr.ReadLine().Split();
+            for (int j = 0; j < cols; j++)
+            {
+                array[i, j] = int.Parse(line[j]);
+            }
+        }
+        return array;
+    }
+
+    static void ShowArray(int[,] array)
+    {
+        Console.WriteLine("Array:");
+        for (int i = 0; i < array.GetLength(0); i++)
+        {
+            for (int j = 0; j < array.GetLength(1); j++)
+            {
+                Console.Write(array[i, j] + " ");
+            }
+            Console.WriteLine();
+        }
+    }
+
+    static void ShowRowAndColumnTotals(int[,] array)
+    {
+        Console.WriteLine("Row Totals:");
+        for (int i = 0; i < array.GetLength(0); i++)
+        {
+            int rowSum = 0;
+            for (int j = 0; j < array.GetLength(1); j++)
+            {
+                rowSum += array[i, j];
+            }
+            Console.WriteLine($"Row {i + 1}: {rowSum}");
+        }
+
+        Console.WriteLine("Column Totals:");
+        for (int j = 0; j < array.GetLength(1); j++)
+        {
+            int colSum = 0;
+            for (int i = 0; i < array.GetLength(0); i++)
+            {
+                colSum += array[i, j];
+            }
+            Console.WriteLine($"Column {j + 1}: {colSum}");
+        }
+    }
+
+    // Task 2: Process Numeric File
+    static void ProcessNumericFile()
+    {
+        string fileName = "numbers.txt";
+        var numberArrays = LoadNumberArraysFromFile(fileName);
+        Console.WriteLine("Do you want to display results on screen or write to file? (s/f)");
+        string choice = Console.ReadLine();
+        Console.Clear();
+
+        using TextWriter writer = choice.ToLower() == "f" ? new StreamWriter("results.txt") : Console.Out;
+        ShowResults(numberArrays, writer);
+        if (choice.ToLower() == "f") Console.WriteLine("Results written to results.txt");
+        Console.ReadLine();
+    }
+
+    static int[][] LoadNumberArraysFromFile(string fileName)
+    {
+        var lines = File.ReadAllLines(fileName, Encoding.UTF8);
+        return lines.Select(ParseNumbers).ToArray();
+    }
+
+    static int[] ParseNumbers(string line)
+    {
+        char[] delimiters = new char[] { ' ', '\t' };
+        return line.Split(delimiters, StringSplitOptions.RemoveEmptyEntries)
+                   .Select(num => int.TryParse(num, out int n) ? n : throw new FormatException())
+                   .ToArray();
+    }
+
+    static void ShowResults(int[][] numberArrays, TextWriter writer)
+    {
+        foreach (var numbers in numberArrays)
+        {
+            int sum = numbers.Sum();
+            double average = numbers.Average();
+            int count = numbers.Length;
+            writer.WriteLine($"Count: {count}, Sum: {sum}, Average: {average:F2}");
+        }
+    }
+
+    // Task 3: Process Weekly Temperature Data
+    static void ProcessWeeklyTemperatureData()
+    {
+        string inputFileName = "temperature.txt";
+        string outputFileName = "finaltemperature.txt";
+        ProcessTemperatureFile(inputFileName, outputFileName);
+    }
+
+    static void ProcessTemperatureFile(string inputFileName, string outputFileName)
+    {
+        var lines = File.ReadAllLines(inputFileName, Encoding.UTF8);
+        using var writer = new StreamWriter(outputFileName);
+        foreach (var line in lines)
+        {
+            writer.WriteLine(FormatTemperatureData(line));
+        }
+        Console.WriteLine($"Processed data saved to {outputFileName}");
+        Console.ReadLine();
+    }
+
+    public static string FormatTemperatureData(string line)
+    {
+        int v = line.IndexOf(':');
+        string day = line.Substring(0, v + 1);
+        string measurements = line.Substring(v + 1);
+        int[] temps = ParseNumbers(measurements);
+
+        if (temps.Length == 0)
+        {
+            return $"{day} mistake";
+        }
+
+        return String.Format("{0} {1:F2} {2} {3}", day, temps.Average(), temps.Min(), temps.Max());
+    }
+
+    // Task 4: Manage Friends List
+    static void ManageFriendsList()
+    {
+        string fileName = "friends.txt";
+        string[] friendsData = File.ReadAllLines(fileName);
+        ShowFriendsList(friendsData);
+    }
+
+    static void ShowFriendsList(string[] friendsData)
+    {
+        string header = "Name               | Address            | Phone          | Birth Date   | Age";
+        Console.WriteLine(header);
+        Console.WriteLine(new string('-', header.Length));
+
+        foreach (var line in friendsData)
+        {
+            var parts = line.Split(';');
+            string name = parts[0].PadRight(18);
+            string address = parts[1].PadRight(18);
+            string phone = parts[2].PadRight(14);
+            string birthDate = parts[3].PadRight(12);
+            int age = CalculateAge(parts[3]);
+
+            Console.WriteLine($"{name} | {address} | {phone} | {birthDate} | {age}");
+        }
+    }
+
+    static int CalculateAge(string birthDateString)
+    {
+        if (DateTime.TryParse(birthDateString, out DateTime birthDate))
+        {
+            int age = DateTime.Today.Year - birthDate.Year;
+            if (birthDate > DateTime.Today.AddYears(-age)) age--;
+            return age;
+        }
+        else
+        {
+            Console.WriteLine("Invalid birth date format.");
+            return 0;
+        }
+    }
+
+    // Task 5: Query Friends Data
+    static void QueryFriendsData()
+    {
+        string fileName = "friends.txt";
+        string[] friendsData = File.ReadAllLines(fileName);
+
+        Console.WriteLine("Enter city to search:");
+        string city = Console.ReadLine();
+        string[] cityResults = FilterByCity(friendsData, city);
+        Console.WriteLine("Results for city:");
+        ShowQueryResults(cityResults);
+
+        Console.WriteLine("Enter age to search:");
+        if (int.TryParse(Console.ReadLine(), out int age))
+        {
+            string[] yearResults = FilterByAge(friendsData, age);
+            Console.WriteLine("Results for age:");
+            ShowQueryResults(yearResults);
+        }
+        else
+        {
+            Console.WriteLine("Invalid age format.");
+        }
+    }
+
+    public static string[] FilterByCity(string[] data, string city)
+    {
+        return Array.FindAll(data, line => line.Split(';')[1].Contains(city, StringComparison.OrdinalIgnoreCase));
+    }
+
+    public static string[] FilterByAge(string[] data, int age)
+    {
+        return Array.FindAll(data, line =>
+        {
+            var parts = line.Split(';');
+            if (DateTime.TryParse(parts[3], out DateTime birthDate))
+            {
+                int currentAge = DateTime.Today.Year - birthDate.Year;
+                if (birthDate > DateTime.Today.AddYears(-currentAge)) currentAge--;
+                return currentAge == age;
+            }
+            return false;
+        });
+    }
+
+    static void ShowQueryResults(string[] results)
+    {
+        foreach (var result in results)
+        {
+            Console.WriteLine(result);
+        }
+    }
+}
