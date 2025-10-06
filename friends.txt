@@ -1,0 +1,2 @@
+John Doe;Kaunas;860012345;1999-06-21
+Jane Smith;Vilnius;860098765;2000-02-14
